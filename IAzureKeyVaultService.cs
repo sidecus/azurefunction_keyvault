@@ -1,4 +1,4 @@
-namespace Zyin.Function
+namespace zyin.Function
 {
     using System;
     using Microsoft.Extensions.Configuration;

@@ -1,7 +1,7 @@
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
-[assembly: FunctionsStartup(typeof(Zyin.Function.Startup))]
+[assembly: FunctionsStartup(typeof(zyin.Function.Startup))]
 
-namespace Zyin.Function
+namespace zyin.Function
 {
     using System;
     

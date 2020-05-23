@@ -1,4 +1,4 @@
-namespace Zyin.Function
+namespace zyin.Function
 {
     using System;
     using Microsoft.Azure.Functions.Extensions.DependencyInjection;
@@ -79,7 +79,7 @@ namespace Zyin.Function
             var configBuilder = new ConfigurationBuilder();
             var azureServiceTokenProvider = new AzureServiceTokenProvider();
             var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
-            
+
             configBuilder.AddAzureKeyVault(keyVaultUrl, keyVaultClient, new DefaultKeyVaultSecretManager());
 
             //Register keyvalue based secrets
