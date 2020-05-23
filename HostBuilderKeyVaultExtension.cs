@@ -14,7 +14,7 @@ namespace Zyin.Function
     public static class HostBuilderKeyVaultExtensions
     {
         /// <summary>
-        /// Add FunctionSecretManager service which wraps KeyVault based on user secrets. Use client id and client secret from user secrets for local development.
+        /// Add IAzureKeyVaultService which wraps KeyVault. Use client id and client secret from user secrets to initialize keyvault (local development).
         /// </summary>
         /// <param name="IFunctionsHostBuilder">host builder</param>
         /// <param name="keyVaultUrl">keyvault url</param>
@@ -48,11 +48,11 @@ namespace Zyin.Function
             var userSecrets = configBuilder.Build();
             var clientId = userSecrets[keyVaultAppIdKey];
             var clientSecret = userSecrets[keyVaultAppSecretKey];
+
             configBuilder.AddAzureKeyVault(keyVaultUrl, clientId, clientSecret);
 
             //Register keyvalue based secrets
-            var config = configBuilder.Build();
-            hostBuilder.Services.AddSingleton<IAzureKeyVaultService>(new AzureKeyVaultService(config));
+            BuildAndAddAzureKeyVaultService(hostBuilder, configBuilder);
         }
 
         /// <summary>
@@ -79,6 +79,7 @@ namespace Zyin.Function
             var configBuilder = new ConfigurationBuilder();
             var azureServiceTokenProvider = new AzureServiceTokenProvider();
             var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
+            
             configBuilder.AddAzureKeyVault(keyVaultUrl, keyVaultClient, new DefaultKeyVaultSecretManager());
 
             //Register keyvalue based secrets
