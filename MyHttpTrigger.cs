@@ -38,7 +38,7 @@ namespace zyin.Function
         /// <returns>message contains the secret value</returns>
         [FunctionName("ShowKeyVaultSecret")]
         public ActionResult<string> ShowKeyVaultSecret(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "secrets/{secretName}")] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "vault/{secretName}")] HttpRequest req,
             string secretName,
             ILogger log)
         {
