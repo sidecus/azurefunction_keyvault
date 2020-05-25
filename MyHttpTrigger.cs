@@ -6,6 +6,8 @@ namespace zyin.Function
     using Microsoft.Azure.WebJobs.Extensions.Http;
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Options;
+    using Microsoft.Extensions.Configuration;
 
     /// <summary>
     /// class demoing HttpTrigger with keyvault support
@@ -15,16 +17,22 @@ namespace zyin.Function
         /// <summary>
         /// Reference to the azure keyvault service
         /// </summary>
-        private readonly IAzureKeyVaultService keyVaultService;
+        private readonly IConfiguration configuration;
+
+        /// <summary>
+        /// Reference to app config
+        /// </summary>
+        private readonly AppConfig appConfig;
 
         /// <summary>
         /// Initializes a new MyHttpTriggerFunction class.
         /// It takes IAzureKeyVaultService from the DI container.
         /// </summary>
         /// <param name="keyVaultService"></param>
-        public MyHttpTrigger(IAzureKeyVaultService keyVaultService)
+        public MyHttpTrigger(IConfiguration configuration, IOptions<AppConfig> appConfigOptions)
         {
-            this.keyVaultService = keyVaultService ?? throw new ArgumentNullException(nameof(keyVaultService));
+            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            this.appConfig = appConfigOptions?.Value ?? throw new ArgumentNullException(nameof(appConfigOptions));
         }
 
         /// <summary>
@@ -38,13 +46,26 @@ namespace zyin.Function
         /// <returns>message contains the secret value</returns>
         [FunctionName("ShowKeyVaultSecret")]
         public ActionResult<string> ShowKeyVaultSecret(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "vault/{secretName}")] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "vault/{secretName}")] HttpRequest req,
             string secretName,
             ILogger log)
         {
-            var secretValue = this.keyVaultService.GetSecret<string>(secretName);
+            var secretValue = this.configuration.GetValue<string>(secretName);
             var message = secretValue != null ? $"Hush, this is our secret - {secretName} : {secretValue}" : $"Secret {secretName} doesn't exist in keyvault.";
             return message;
+        }
+
+        /// <summary>
+        /// An Azure function endpoint to render AppConfig
+        /// </summary>
+        /// <param name="req">http request</param>
+        /// <returns>AppConfig</returns>
+        [FunctionName("ShowAppConfig")]
+        public ActionResult<AppConfig> ShowAppConfig(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "appconfig")] HttpRequest req,
+            ILogger log)
+        {
+            return this.appConfig;
         }
     }
 }
