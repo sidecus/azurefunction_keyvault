@@ -39,8 +39,9 @@ builder.Services
 Kindly note I used some tricks here since the Azure Function SDK doesn't provide the capability to customize configuration builder. All code is in [```FunctionHostBuilderSecretExtensions```](https://github.com/sidecus/azurefunction_keyvault/blob/master/HostBuilderAzureKeyVaultExtension.cs).
 I also used ```ActionResult<T>``` instead of ```IActionResult``` as function return type since it provides much better result type checking.
 
-**Disclaimer**
-* *Code in ```MyHttpTrigger``` is for demo purpose. You should never dump your secret or settings in this way for real production usage.*
+## Disclaimer
+* Code in ```MyHttpTrigger``` is *for demo purpose only*. You should never dump your secret or settings in this way for real production usage.
 * Secrets are not automatically refreshed now. If you need that capability you can build on top of this.
+* Azure Function runtime depends on a lot of environment variables which are also injected as part of IConfiguration. Since we are extending it with KeyVault secrets there is possibility of "name" collision which can impact the run time behavior. Please make sure you use unique naming patterns for your secrets to avoid this.
 
 **Enjoy and happy coding. Peace.**
