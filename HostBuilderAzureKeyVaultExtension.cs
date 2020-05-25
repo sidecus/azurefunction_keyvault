@@ -1,8 +1,6 @@
 namespace zyin.Function
 {
     using System;
-    using System.Diagnostics;
-    using System.Linq;
     using Microsoft.Azure.Functions.Extensions.DependencyInjection;
     using Microsoft.Azure.KeyVault;
     using Microsoft.Azure.Services.AppAuthentication;
@@ -59,18 +57,16 @@ namespace zyin.Function
         /// </summary>
         /// <param name="IFunctionsHostBuilder">host builder</param>
         /// <returns>host builder</returns>
-        public static IFunctionsHostBuilder AddFunctionAzureKeyVault(this IFunctionsHostBuilder hostBuilder)
+        public static IFunctionsHostBuilder AddAzureKeyVault(this IFunctionsHostBuilder hostBuilder)
         {
             if (hostBuilder == null)
             {
                 throw new ArgumentNullException(nameof(hostBuilder));
             }
 
-            var configBuilder = new ConfigurationBuilder();
-
             // Add default Azure function config first
             var defaultConfig = GetDefaultAzureFunctionConfig(hostBuilder);
-            configBuilder.AddConfiguration(defaultConfig);
+            var configBuilder = new ConfigurationBuilder().AddConfiguration(defaultConfig);
 
             // Add keyvault as a new config provider
             if (IsDevelopment)
@@ -83,8 +79,8 @@ namespace zyin.Function
             }
 
             // Replace the configuration in DI container
-            var config = configBuilder.Build();
-            hostBuilder.Services.Replace(ServiceDescriptor.Singleton(typeof(IConfiguration), config));
+            var newConfig = configBuilder.Build();
+            hostBuilder.Services.Replace(ServiceDescriptor.Singleton(typeof(IConfiguration), newConfig));
 
             return hostBuilder;
         }

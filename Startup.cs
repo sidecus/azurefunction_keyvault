@@ -17,11 +17,10 @@ namespace zyin.Function
         /// <param name="builder">host builder</param>
         public override void Configure(IFunctionsHostBuilder builder)
         {
-            
             // Add azure keyvault
-            builder.AddFunctionAzureKeyVault();
+            builder.AddAzureKeyVault();
             
-            // Inject IOptions pattern
+            // Inject IOptions pattern for AppConfig (which can reference KeyVault secrets)
             builder.Services
                 .AddOptions<AppConfig>()
                 .Configure<IConfiguration>((appConfig, configuration) =>
