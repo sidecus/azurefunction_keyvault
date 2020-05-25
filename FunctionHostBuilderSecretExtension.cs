@@ -10,10 +10,10 @@ namespace zyin.Function
     using Microsoft.Extensions.DependencyInjection.Extensions;
 
     /// <summary>
-    /// Extension class for IFunctionsHostBuilder to enable KeyVault.
+    /// Extension class for IFunctionsHostBuilder to enable user secrets and KeyVault.
     /// Use app id and app secret for local development and managed identity for prod.
     /// </summary>
-    public static class HostBuilderAzureKeyVaultExtensions
+    public static class FunctionHostBuilderSecretExtensions
     {
         /// <summary>
         /// Key vault name - set in local.settings.json or app settings for prod
@@ -57,7 +57,7 @@ namespace zyin.Function
         /// </summary>
         /// <param name="IFunctionsHostBuilder">host builder</param>
         /// <returns>host builder</returns>
-        public static IFunctionsHostBuilder AddAzureKeyVault(this IFunctionsHostBuilder hostBuilder)
+        public static IFunctionsHostBuilder AddSecrets(this IFunctionsHostBuilder hostBuilder)
         {
             if (hostBuilder == null)
             {
@@ -68,17 +68,16 @@ namespace zyin.Function
             var defaultConfig = GetDefaultAzureFunctionConfig(hostBuilder);
             var configBuilder = new ConfigurationBuilder().AddConfiguration(defaultConfig);
 
-            // Add keyvault as a new config provider
+            // Add user secrets and azure keyvault
             if (IsDevelopment)
             {
-                configBuilder.AddAzureKeyVaultServiceFromUserSecrets();
-            }
-            else
-            {
-                configBuilder.AddAzureKeyVaultFromManagedIdentity();
+                configBuilder.AddUserSecrets<Startup>();
             }
 
-            // Replace the configuration in DI container
+            configBuilder.TryAddAzureKeyVault();
+
+            // Replace the configuration in DI container - this is a hack right now since
+            // FunctionHostBuilder doesn't provide a way to customize config builder
             var newConfig = configBuilder.Build();
             hostBuilder.Services.Replace(ServiceDescriptor.Singleton(typeof(IConfiguration), newConfig));
 
@@ -86,43 +85,37 @@ namespace zyin.Function
         }
 
         /// <summary>
-        /// Add IAzureKeyVaultService which wraps KeyVault. Use client id and client secret from user secrets to initialize keyvault (local development).
-        /// </summary>
-        /// <param name="configBuilder">cofig builder</param>
-        /// <returns>config builder</returns>
-        private static IConfigurationBuilder AddAzureKeyVaultServiceFromUserSecrets(this IConfigurationBuilder configBuilder)
-        {
-            if (configBuilder == null)
-            {
-                throw new ArgumentNullException(nameof(configBuilder));
-            }
-
-            // Load keyvault app id and app secret from user secrets
-            configBuilder.AddUserSecrets<Startup>();
-            var tempConfig = configBuilder.Build();
-            var clientId = tempConfig[UserSecrets_KeyVaultAppIdKey];
-            var clientSecret = tempConfig[UserSecrets_KeyVaultAppSecretKey];
-
-            return configBuilder.AddAzureKeyVault(KeyVaultUrl, clientId, clientSecret);
-        }
-
-        /// <summary>
-        /// Add FunctionSecretManager service which wraps KeyVault. Use Managed identity.
+        /// Add Azure KeyVault using Managed identity.
         /// </summary>
         /// <param name="configBuilder">config builder</param>
         /// <returns>config builder</returns>
-        private static IConfigurationBuilder AddAzureKeyVaultFromManagedIdentity(this IConfigurationBuilder configBuilder)
+        private static IConfigurationBuilder TryAddAzureKeyVault(this IConfigurationBuilder configBuilder)
         {
             if (configBuilder == null)
             {
                 throw new ArgumentNullException(nameof(configBuilder));
             }
 
-            // Use managed identity
-            var azureServiceTokenProvider = new AzureServiceTokenProvider();
-            var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
+            if (!string.IsNullOrWhiteSpace(KeyVaultName))
+            {
+                if (IsDevelopment)
+                {
+                    // Add Azure keyvault with app id and app secret from user secrets
+                    var tempConfig = configBuilder.Build();
+                    var clientId = tempConfig[UserSecrets_KeyVaultAppIdKey];
+                    var clientSecret = tempConfig[UserSecrets_KeyVaultAppSecretKey];
+                    configBuilder.AddAzureKeyVault(KeyVaultUrl, clientId, clientSecret);
+                }
+                else
+                {
+                    // Non-development environment. Add keyvault from managed identity
+                    var azureServiceTokenProvider = new AzureServiceTokenProvider();
+                    var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
+                    configBuilder.AddAzureKeyVault(KeyVaultUrl, keyVaultClient, new DefaultKeyVaultSecretManager());
+                }
+            }
 
-            return configBuilder.AddAzureKeyVault(KeyVaultUrl, keyVaultClient, new DefaultKeyVaultSecretManager());
+            return configBuilder;
         }
 
         /// <summary>

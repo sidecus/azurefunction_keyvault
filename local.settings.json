@@ -1,0 +1,10 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+    "KeyVaultName": "azurefunction",
+    "AppConfig:Intconfig": 3,
+    "AppConfig:StringConfig": "this is a string config"
+  }
+}

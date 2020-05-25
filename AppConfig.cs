@@ -17,9 +17,8 @@ namespace zyin.Function
         public string StringConfig { get; set; }
 
         /// <summary>
-        /// Secret value in config bound from KeyVault
+        /// Secret value in config bound from user secrets or Azure KeyVault
         /// </summary>
-        /// <value></value>
         public string AppSecret { get; set; }
     }
 }

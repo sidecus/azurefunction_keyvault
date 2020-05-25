@@ -10,12 +10,12 @@ namespace zyin.Function
     using Microsoft.Extensions.Configuration;
 
     /// <summary>
-    /// class demoing HttpTrigger with keyvault support
+    /// class demoing HttpTrigger with user secrets and keyvault support
     /// </summary>
     public class MyHttpTrigger
     {
         /// <summary>
-        /// Reference to the azure keyvault service
+        /// Reference to the ICofiguratoin object
         /// </summary>
         private readonly IConfiguration configuration;
 
@@ -28,18 +28,20 @@ namespace zyin.Function
         /// Initializes a new MyHttpTriggerFunction class.
         /// It takes IAzureKeyVaultService from the DI container.
         /// </summary>
-        /// <param name="keyVaultService"></param>
+        /// <param name="configuration">configuration</param>
+        /// <param name="appConfigOptions">app config options</param>
         public MyHttpTrigger(IConfiguration configuration, IOptions<AppConfig> appConfigOptions)
         {
+            // Usually you only need to access your settings via IOptions pattern.
+            // I am referencing configuration here for demo purpose.
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.appConfig = appConfigOptions?.Value ?? throw new ArgumentNullException(nameof(appConfigOptions));
         }
 
         /// <summary>
-        /// An Azure function endpoint to dump secrets from Azure keyvault.
+        /// An Azure function endpoint to dump secrets.
         /// This is for demo purpose, don't do this for real secrets or in Production.
         /// 1. We use ActionResult<T> instead of IActionResult for better return type checking.
-        /// 2. Use IAzureKeyVaultService to get secret value.
         /// </summary>
         /// <param name="req">http request</param>
         /// <param name="secretName">secret name</param>
@@ -50,6 +52,8 @@ namespace zyin.Function
             string secretName,
             ILogger log)
         {
+            // !!!This is just for demo purpose!!!
+            // DO NOT do this in prod - you should never dump secrets.
             var secretValue = this.configuration.GetValue<string>(secretName);
             var message = secretValue != null ? $"Hush, this is our secret - {secretName} : {secretValue}" : $"Secret {secretName} doesn't exist in keyvault.";
             return message;
@@ -65,6 +69,8 @@ namespace zyin.Function
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "appconfig")] HttpRequest req,
             ILogger log)
         {
+            // !!!This is just for demo purpose!!!
+            // DO NOT do this in prod - you should never blindly dump config settings since it can contain secrets.
             return this.appConfig;
         }
     }
